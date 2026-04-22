@@ -1,0 +1,16 @@
+{
+  "name": "flint-command-center",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build step — static HTML + serverless functions'",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "@notionhq/client": "^2.2.15"
+  },
+  "devDependencies": {
+    "vercel": "^37.0.0"
+  }
+}

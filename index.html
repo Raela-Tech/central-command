@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FLINT Command Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600&family=JetBrains+Mono:wght@400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --paper: #fafaf7; --ink: #17161a; --ink-2: #5a5760; --ink-3: #9a969f;
+      --rule: #ebe8e2; --rule-strong: #d4cfc6; --accent: #d14836; --accent-ink: #fff;
+      --sans: 'Inter', -apple-system, system-ui, sans-serif;
+      --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+      --serif: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+    }
+    [data-theme="warm"] { --paper:#fafaf7;--ink:#17161a;--ink-2:#5a5760;--ink-3:#9a969f;--rule:#ebe8e2;--rule-strong:#d4cfc6; }
+    [data-theme="cool"] { --paper:#f6f7f9;--ink:#0e1116;--ink-2:#51585f;--ink-3:#8e959d;--rule:#e3e6eb;--rule-strong:#c8cdd4; }
+    [data-theme="dark"] { --paper:#0e0e10;--ink:#f0ece6;--ink-2:#a19d97;--ink-3:#6a6763;--rule:#232325;--rule-strong:#36363a; }
+    html,body { margin:0;padding:0;height:100%;font-family:var(--sans);background:#eeece6;color:var(--ink);-webkit-font-smoothing:antialiased; }
+    #stage { min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 16px;box-sizing:border-box;background:radial-gradient(circle at 30% 20%,color-mix(in oklab,var(--accent) 6%,transparent),transparent 50%),#efece5; }
+    button,textarea { font:inherit;color:inherit; }
+    textarea::placeholder { color:var(--ink-3); }
+    ::-webkit-scrollbar { width:0;height:0; }
+    @keyframes fade { from{opacity:0}to{opacity:1} }
+    @keyframes slide { from{transform:translateY(100%)}to{transform:translateY(0)} }
+
+    #tweaks { position:fixed;right:20px;bottom:20px;width:280px;background:#17161a;color:#f0ece6;border-radius:12px;padding:14px 14px 12px;font-family:var(--mono);font-size:11px;box-shadow:0 20px 50px rgba(0,0,0,.25),0 0 0 1px rgba(255,255,255,.06);z-index:1000;display:none; }
+    #tweaks.open { display:block; }
+    #tweaks h3 { margin:0 0 10px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#9a969f;font-weight:600; }
+    #tweaks .row { display:flex;align-items:center;justify-content:space-between;padding:6px 0;gap:10px; }
+    #tweaks label { color:#a19d97;text-transform:uppercase;letter-spacing:1px;font-size:9px; }
+    #tweaks .opts { display:flex;gap:4px; }
+    #tweaks .opt { padding:4px 8px;border:1px solid #36363a;background:transparent;color:#a19d97;cursor:pointer;border-radius:4px;font-size:9px;letter-spacing:1px;text-transform:uppercase; }
+    #tweaks .opt.active { background:#f0ece6;color:#17161a;border-color:#f0ece6; }
+    #tweaks input[type="color"] { width:28px;height:22px;border:none;background:none;padding:0;cursor:pointer; }
+    #tweaks input[type="range"] { width:120px;accent-color:#f0ece6; }
+  </style>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="stage"><div id="root"></div></div>
+
+  <div id="tweaks">
+    <h3>Tweaks</h3>
+    <div class="row">
+      <label>Theme</label>
+      <div class="opts" data-key="theme">
+        <button class="opt" data-val="warm">Warm</button>
+        <button class="opt" data-val="cool">Cool</button>
+        <button class="opt" data-val="dark">Dark</button>
+      </div>
+    </div>
+    <div class="row">
+      <label>Accent</label>
+      <input type="color" id="tw-accent" />
+    </div>
+    <div class="row">
+      <label>Type</label>
+      <div class="opts" data-key="typepair">
+        <button class="opt" data-val="fraunces">Serif hd</button>
+        <button class="opt" data-val="inter">All sans</button>
+        <button class="opt" data-val="mono">Mono hd</button>
+      </div>
+    </div>
+    <div class="row">
+      <label>Density</label>
+      <div class="opts" data-key="density">
+        <button class="opt" data-val="balanced">Balanced</button>
+        <button class="opt" data-val="dense">Dense</button>
+      </div>
+    </div>
+    <div class="row">
+      <label>Team size</label>
+      <input type="range" id="tw-team" min="2" max="4" step="1" />
+    </div>
+  </div>
+
+  <script>
+    const TWEAK_DEFAULTS = { theme:'warm', accent:'#d14836', typepair:'fraunces', density:'balanced', teamSize:3 };
+    window.__TWEAKS = { ...TWEAK_DEFAULTS };
+
+    function applyTweaks(t) {
+      const r = document.documentElement;
+      r.setAttribute('data-theme', t.theme);
+      r.style.setProperty('--accent', t.accent);
+      const typeMap = {
+        fraunces:"'Fraunces','Iowan Old Style',Georgia,serif",
+        inter:"'Inter',-apple-system,system-ui,sans-serif",
+        mono:"'JetBrains Mono',ui-monospace,monospace",
+      };
+      r.style.setProperty('--serif', typeMap[t.typepair] || typeMap.fraunces);
+      document.body.classList.toggle('dark-stage', t.theme === 'dark');
+      if (window.__rerenderFlint) window.__rerenderFlint();
+      syncPanel();
+    }
+    function syncPanel() {
+      const t = window.__TWEAKS;
+      document.querySelectorAll('#tweaks .opts').forEach(g => {
+        const key = g.dataset.key;
+        g.querySelectorAll('.opt').forEach(b => b.classList.toggle('active', b.dataset.val === t[key]));
+      });
+      document.getElementById('tw-accent').value = t.accent;
+      document.getElementById('tw-team').value = t.teamSize;
+    }
+    function setTweak(key, val) {
+      window.__TWEAKS[key] = val;
+      applyTweaks(window.__TWEAKS);
+    }
+    document.querySelectorAll('#tweaks .opts').forEach(g => {
+      g.addEventListener('click', e => {
+        const btn = e.target.closest('.opt');
+        if (btn) setTweak(g.dataset.key, btn.dataset.val);
+      });
+    });
+    document.getElementById('tw-accent').addEventListener('input', e => setTweak('accent', e.target.value));
+    document.getElementById('tw-team').addEventListener('input', e => setTweak('teamSize', parseInt(e.target.value,10)));
+    window.addEventListener('message', e => {
+      const d = e.data || {};
+      if (d.type === '__activate_edit_mode') document.getElementById('tweaks').classList.add('open');
+      if (d.type === '__deactivate_edit_mode') document.getElementById('tweaks').classList.remove('open');
+    });
+    applyTweaks(window.__TWEAKS);
+  </script>
+
+  <!-- Load order matters: ios-frame → useNotion → data → app → root -->
+  <script type="text/babel" src="ios-frame.jsx"></script>
+  <script type="text/babel" src="src/useNotion.js"></script>
+  <script type="text/babel" src="src/data.jsx"></script>
+  <script type="text/babel" src="src/app.jsx"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    function Root() {
+      const [, force] = useState(0);
+      useEffect(() => { window.__rerenderFlint = () => force(n => n + 1); }, []);
+      const t = window.__TWEAKS;
+      return (
+        <IOSDevice width={402} height={874} dark={t.theme === 'dark'}>
+          <FlintApp teamSize={t.teamSize} />
+        </IOSDevice>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById('root')).render(<Root />);
+  </script>
+</body>
+</html>

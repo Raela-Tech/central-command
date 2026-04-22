@@ -1,39 +1,83 @@
-# Central Command
+# FLINT Command Center
 
-## Overview
+Phone-first daily ops app. Reads live from Notion. No writes.
 
-Central Command is a sophisticated command management tool that simplifies the way you manage and automate tasks within your organization. Its intuitive design and robust features enable users to streamline workflows and increase productivity, making it an essential component for any tech team.
+## Stack
+- Static HTML + React (no bundler)
+- Vercel serverless functions for Notion API proxy
+- Claude API for Intake tab task extraction
 
-## Features
-- **Task Automation**: Automate repetitive tasks to save time and reduce human error.
-- **Real-time Analytics**: Gain insights into task performance with real-time analytics and reporting.
-- **User Management**: Easily manage user roles and permissions within the system.
-- **Integration Capabilities**: Seamlessly integrate with other tools and platforms to enhance functionality.
+## Setup
 
-## Installation Instructions
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/Raela-Tech/central-command.git
-   cd central-command
-   ```
-2. Install the required dependencies:
-   ```bash
-   npm install
-   ```
-3. Set up the environment variables as required by the application.
-4. Start the application:
-   ```bash
-   npm start
-   ```
+### 1. Install dependencies
+```bash
+npm install
+```
 
-## Usage
-To use Central Command effectively, refer to the user manual provided in the `docs` folder. Basic commands and operations can be executed via the command line interface once the application is running.
+### 2. Create a Notion integration
+1. Go to https://www.notion.so/my-integrations
+2. Create a new integration — name it "FLINT Command Center"
+3. Copy the Internal Integration Token
+4. Open your Tasks DB in Notion → ... menu → Connections → add your integration
 
-## Contributing
-We welcome contributions to Central Command! Please adhere to the following guidelines:
-1. Fork the repository and create your branch from `main`.
-2. Make your changes and ensure your code follows the project's coding conventions.
-3. Test your changes thoroughly.
-4. Submit a pull request detailing your changes.
+### 3. Set environment variables
+```bash
+cp .env.example .env.local
+# Fill in NOTION_TOKEN with your integration token
+# NOTION_TASKS_DB is already set to your DB ID
+```
 
-Thank you for considering contributing to Central Command!
+Add both variables to Vercel:
+- Dashboard → your project → Settings → Environment Variables
+- Add NOTION_TOKEN and NOTION_TASKS_DB
+
+### 4. Link your team members' Notion user IDs
+After deploying, call:
+```
+GET /api/team-ids
+```
+Copy each person's `id` value into `api/team.js` in the TEAM array, matching by name.
+
+### 5. Run locally
+```bash
+npm run dev
+# Opens at http://localhost:3000
+```
+
+### 6. Deploy
+```bash
+npm run deploy
+```
+
+## File structure
+```
+/
+├── index.html              # App shell — loads all scripts
+├── ios-frame.jsx           # iOS device frame component (unchanged)
+├── src/
+│   ├── app.jsx             # All React components — wired to live data
+│   ├── data.jsx            # Constants only (categories, intake placeholder)
+│   └── useNotion.js        # Fetches /api/* and exposes myTasks, team, waitingOn
+├── api/
+│   ├── _notion.js          # Shared Notion client + normalizer
+│   ├── tasks.js            # GET /api/tasks — your tasks only
+│   ├── team.js             # GET /api/team — team tasks grouped by person
+│   ├── waiting.js          # GET /api/waiting — stub until Waiting On DB exists
+│   └── team-ids.js         # GET /api/team-ids — one-time utility
+├── vercel.json
+├── package.json
+└── .env.example
+```
+
+## Waiting On DB (when ready)
+Create a Notion DB with:
+- Item (title)
+- Waiting on (text)  
+- Date flagged (date)
+- Status (select: Active / Resolved)
+
+Then replace the stub in `api/waiting.js` with a real Notion query filtered to `Status = Active`.
+
+## Work categories
+The five categories in `src/data.jsx` must exactly match the select option names
+in your Notion Work Category field. Update if they differ.
