@@ -4,7 +4,7 @@
 
 const { getClient, queryTasks, cors } = require('./_notion');
 
-const MY_USER_ID = '206d872b-594c-81d1-9340-00020dfc3924';
+const MY_NAME = 'Sydney Nichols';
 
 module.exports = async function handler(req, res) {
   cors(res);
@@ -14,8 +14,8 @@ module.exports = async function handler(req, res) {
     const notion = getClient();
 
     const myTasksFilter = {
-      property: 'Assignee',
-      people: { contains: MY_USER_ID },
+      property: 'Assigned To',
+      rich_text: { contains: MY_NAME },
     };
 
     const tasks = await queryTasks(notion, myTasksFilter);

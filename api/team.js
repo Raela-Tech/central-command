@@ -36,21 +36,9 @@ module.exports = async function handler(req, res) {
     // Fetch tasks for each team member in parallel
     const results = await Promise.all(
       TEAM.map(async member => {
-        // If no Notion user ID is set yet, return empty queue
-        if (!member.notionUserId) {
-          return {
-            ...member,
-            status: 'on-track',
-            hero: null,
-            queue: [],
-            blockers: [],
-            _unlinked: true,
-          };
-        }
-
         const filter = {
-          property: 'Assignee',
-          people: { contains: member.notionUserId },
+          property: 'Assigned To',
+          rich_text: { contains: member.name },
         };
 
         const tasks = await queryTasks(notion, filter);

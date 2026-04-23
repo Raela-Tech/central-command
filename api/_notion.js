@@ -101,8 +101,7 @@ function normalizePage(page) {
     age:        ageLabel(page.created_time),
     notes:      str(p['Notes']),
     blockedBy:  str(p['Blocked By']),
-    assigneeId: personId(p['Assignee']),
-    assigneeName: str(p['Assignee']),
+    assigneeName: str(p['Assigned To']),
   };
 }
 
