@@ -4,7 +4,7 @@
 
 const { getClient, queryTasks, cors } = require('./_notion');
 
-const MY_USER_ID = 'REPLACE_WITH_YOUR_NOTION_USER_ID';
+const MY_USER_ID = '206d872b-594c-81d1-9340-00020dfc3924';
 
 module.exports = async function handler(req, res) {
   cors(res);

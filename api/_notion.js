@@ -100,7 +100,7 @@ function normalizePage(page) {
     due:        dueLabel(str(p['Target Date'])),
     age:        ageLabel(page.created_time),
     notes:      str(p['Notes']),
-    blockedBy:  str(p['Blocked By']),
+    blockedBy:  p['Blocked By']?.relation?.[0]?.id ?? '',
     assigneeName: str(p['Assigned To']),
   };
 }
