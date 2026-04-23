@@ -23,7 +23,7 @@ module.exports = async function handler(req, res) {
     const seen = new Map();
 
     for (const page of response.results) {
-      const people = page.properties?.['Assignee']?.people ?? [];
+      const people = page.properties?.['Assigned To']?.people ?? [];
       for (const person of people) {
         if (!seen.has(person.id)) {
           seen.set(person.id, {

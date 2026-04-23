@@ -38,7 +38,7 @@ module.exports = async function handler(req, res) {
       TEAM.map(async member => {
         const filter = {
           property: 'Assigned To',
-          rich_text: { contains: member.name },
+          people: { contains: member.notionUserId },
         };
 
         const tasks = await queryTasks(notion, filter);
